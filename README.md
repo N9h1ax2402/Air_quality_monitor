@@ -1,8 +1,8 @@
-#Air Quality Monitoring Backend
+# Air Quality Monitoring Backend
 
 This is the backend for the Air Quality Monitoring System, built with Django, Django REST Framework, and WebSockets for real-time monitoring.
 
-##Features
+## Features
 
 Real-time air quality monitoring via WebSockets
 
@@ -12,7 +12,7 @@ Historical data storage and analysis
 
 MQTT support for IoT integration
 
-##Installation
+## Installation
 
 1. Clone the repository
 
@@ -38,7 +38,7 @@ python manage.py migrate
 
 python manage.py runserver
 
-##API Documentation
+## API Documentation
 
 API endpoints are available via Django REST Framework's browsable API at:
 
@@ -47,3 +47,5 @@ http://127.0.0.1:8000/api/
 WebSocket Integration
 
 WebSocket server runs at:
+
+ws://127.0.0.1:8000/ws/air-quality/
