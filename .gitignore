@@ -1,0 +1,4 @@
+venv/
+.env
+structure.txt
+script_mongo.txt
