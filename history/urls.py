@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import get_realtime_data
+from .views import get_history_data
 
 urlpatterns = [
-    path("air-quality/<str:room_name>/", get_realtime_data, name="get_realtime_data"),
+    path("abnormal-reports/<str:room_name>/", get_history_data, name="get_history_data"),
 ]
