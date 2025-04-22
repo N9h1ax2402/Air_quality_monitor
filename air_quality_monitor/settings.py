@@ -42,10 +42,14 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'channels',
     'air_quality_monitor',
+    'corsheaders',
+    
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,12 +82,12 @@ WSGI_APPLICATION = 'air_quality_monitor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {}
+# DATABASES = {}
 
 connect(
     db='air_quality_monitor',
     host='localhost',
-    port=27017,
+    port=27017,     
 )
 
 # Password validation
@@ -104,6 +108,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  
+    "http://127.0.0.1:5173",  
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
