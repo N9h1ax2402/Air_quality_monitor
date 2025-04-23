@@ -42,13 +42,5 @@ python manage.py migrate
 
 python manage.py runserver
 
-## API Documentation
 
-API endpoints are available via Django REST Framework's browsable API at:
-
-http://127.0.0.1:8000/api/
-
-WebSocket Integration
-
-WebSocket server runs at:
 
