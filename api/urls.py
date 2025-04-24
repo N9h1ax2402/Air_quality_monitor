@@ -3,6 +3,7 @@ from .views import *
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from consumers import AirQualityConsumer
 
 
 
@@ -16,7 +17,7 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 urlpatterns = [
-    path('air-quality/<str:room_name>/', get_realtime_data, name='get_realtime_data'),
+    path('air-quality/<int:room_id>/', get_realtime_data, name='get_realtime_data'),
     path("main/weather", get_weather_info, name="get_weather_info"),
     path("main/room", get_room_list, name="get_room_list"),
     path("rooms/<int:room_id>/equipments", get_equipments, name="get_equipments"),

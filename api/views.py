@@ -66,17 +66,17 @@ def api_root(request):
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
-def get_realtime_data(request, room_name):
-    latest_data = AirQualityData.get_latest_data(room_name)
+def get_realtime_data(request, room_id):
+    latest_data = AirQualityData.get_latest_data(room_id)
     if latest_data:
         data = {
-            "room_name": latest_data.room_name,
+            "room_name": latest_data.room_id,
             "temperature": latest_data.temperature,
             "humidity": latest_data.humidity,
             "light": latest_data.light,
             "time" : latest_data.time
         }
-        AirQualityHistory(data).save() # lưu dữ liệu vào collection lịch sử
+        # AirQualityHistory(data).save() # lưu dữ liệu vào collection lịch sử
 
         return Response(data)
     return Response({"error": "No data available"}, status=404)
@@ -131,8 +131,7 @@ def get_room_list(request):
 
 @api_view(['GET'])
 def get_humidity_report(request, room_id):
-    name = Rooms.get_room(room_id)
-    indoor_data = AirQualityData.objects(name).order_by("-time").first()
+    indoor_data = AirQualityData.get_latest_data(room_id)
 
     api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
     params = {
@@ -160,8 +159,7 @@ def get_humidity_report(request, room_id):
     return Response(data)
 @api_view(['GET'])
 def get_temperature_report(request, room_id):
-    name = Rooms.get_room(room_id)
-    indoor_data = AirQualityData.objects(name).order_by("-time").first()
+    indoor_data = AirQualityData.get_latest_data(room_id)
 
     api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
     params = {
@@ -204,9 +202,9 @@ def get_equipments(request, room_id):
 
 @api_view(['GET'])
 def get_air_parameters(request, room_id):
-    name = Rooms.get_room(room_id)
+    
   
-    air_data = AirQualityData.get_latest_data(name)
+    air_data = AirQualityData.get_latest_data(room_id)
     
     data = {
         "room_id": room_id,
