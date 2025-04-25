@@ -18,5 +18,7 @@ Rooms(id=2, name="Master Bedroom", device=2).save()
 # Insert sample equipment
 Equipments(id="eq1", name="Fan", status=True, room_id=1).save()
 Equipments(id="eq2", name="Heater", status=False, room_id=2).save()
+Equipments(id ="eq3", name="Air Purifier", status=True, room_id=1).save()
+
 
 print("Sample data inserted!")

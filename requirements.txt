@@ -6,3 +6,5 @@ djangorestframework-simplejwt
 channels
 drf-yasg
 django-cors-headers
+mongoengine
+requests

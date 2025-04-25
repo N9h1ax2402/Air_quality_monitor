@@ -15,21 +15,30 @@ import requests
 from django.http import HttpResponse
 
 def api_root(request):
+    # Dynamically get all room IDs from the database
+    rooms = Rooms.objects.all()  # Assuming you have a Room model
+    
+    # Basic endpoints
     endpoints = [
-        ("Real-time Air Data (room name)", "/api/air-quality/test-room/"),
         ("Weather Info", "/api/main/weather"),
         ("Room List", "/api/main/room"),
-        ("Equipments (room_id)", "/api/rooms/1/equipments"),
-        ("Air Parameters (room_id)", "/api/rooms/1/parameters"),
-        ("Humidity Report (room_id)", "/api/rooms/1/humidity"),
-        ("Temperature Report (room_id)", "/api/rooms/1/temperature"),
-        ("Perform Action (room_id)", "/api/rooms/1/actions"),
     ]
-
+    
+    # Add room-specific endpoints for each room
+    for room in rooms:
+        endpoints.append((f"Equipments for {room.name}", f"/api/rooms/{room.id}/equipments"))
+        endpoints.append((f"Air Parameters for {room.name}", f"/api/rooms/{room.id}/parameters"))
+        endpoints.append((f"Humidity Report for {room.name}", f"/api/rooms/{room.id}/humidity"))
+        endpoints.append((f"Temperature Report for {room.name}", f"/api/rooms/{room.id}/temperature"))
+    
+    # Add the equipment update endpoint as an example
+    endpoints.append(("View Equipment Update (Example)", "/api/equipments/eq1/update/"))
+    
+    # Generate HTML
     html = """
     <html>
     <head>
-        <title>Air Quality API</title>
+        <title>Smart Home API</title>
         <style>
             body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 40px; }
             h1 { color: #333; }
@@ -49,7 +58,7 @@ def api_root(request):
         </style>
     </head>
     <body>
-        <h1>🚀 Welcome to the Air Quality API</h1>
+        <h1>🏠 Welcome to the Smart Home API</h1>
         <p>Select an endpoint to explore:</p>
         <div class="button-container">
     """
@@ -89,31 +98,54 @@ def list_routes(request):
 @api_view(['GET'])
 def get_weather_info(request):
 
+    lat = request.query_params.get('lat', '44.34')  # Default if not provided
+    lon = request.query_params.get('lon', '10.99')  # Default if not provided
+
     api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
     params = {
-        "lat": 44.34,  
-        "lon": 10.99,  
+        "lat": lat,  
+        "lon": lon,  
         "cnt": 7,      
         "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
         "units": "metric"  
     }
 
+    geo_url = "https://api.openweathermap.org/geo/1.0/reverse"
+    geo_params = {
+        "lat": lat,
+        "lon": lon,
+        "limit": 1,
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5"
+    }
 
-    response = requests.get(api_url, params=params)
+    try:
 
-    if response.status_code == 200:
-        weather_data = response.json()
+        geo_response = requests.get(geo_url, params=geo_params)
+        geo_response.raise_for_status()
+        geo_data = geo_response.json()
+        
+        location_name = "Unknown Location"
+        if geo_data and len(geo_data) > 0:
+            city = geo_data[0].get("name", "")
+            country = geo_data[0].get("country", "")
+            location_name = f"{city}, {country}" if city else "Unknown Location"
+        
+        # Get weather data
+        weather_response = requests.get(api_url, params=params)
+        weather_response.raise_for_status()
+        weather_data = weather_response.json()
 
         data = {
-            "location": "test", 
+            "location": location_name, 
             "weather": weather_data["list"][0]["weather"][0]["description"],
             "temperature": weather_data["list"][0]["temp"]["day"],
             "low": weather_data["list"][0]["temp"]["min"],
             "high": weather_data["list"][0]["temp"]["max"]
         }
         return Response(data)
-    else:
-        return JsonResponse({"error": "Failed to fetch weather data"}, status=response.status_code)
+    
+    except requests.exceptions.RequestException as e:
+        return Response({"error": f"Failed to fetch data: {str(e)}"}, status=500)
 
 @api_view(['GET'])
 def get_room_list(request):
@@ -199,6 +231,29 @@ def get_equipments(request, room_id):
         "status": equipment_data.status,
     }
     return Response(data)
+
+@api_view(['PUT'])
+def update_equipment_status(request, equipment_id):
+    try:
+        equipment = Equipments.objects.get(id=equipment_id)
+        
+        # Get the new status from request data
+        new_status = request.data.get('status')
+        
+        # Update the status
+        equipment.status = new_status
+        equipment.save()
+        
+        data = {
+            "id": equipment.id,
+            "name": equipment.name,
+            "status": equipment.status,
+        }
+        return Response(data)
+    except Equipments.DoesNotExist:
+        return Response({"error": "Equipment not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
 
 @api_view(['GET'])
 def get_air_parameters(request, room_id):

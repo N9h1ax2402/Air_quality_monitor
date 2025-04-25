@@ -3,7 +3,7 @@ from .views import *
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from consumers import AirQualityConsumer
+from .consumers import AirQualityConsumer
 
 
 
@@ -24,7 +24,7 @@ urlpatterns = [
     path("rooms/<int:room_id>/parameters", get_air_parameters, name="get_air_parameters"),
     path("rooms/<int:room_id>/humidity", get_humidity_report, name="get_humidity_report"),
     path("rooms/<int:room_id>/temperature", get_temperature_report, name="get_temperature_report"),
-
+    path('equipments/<str:equipment_id>/update/', update_equipment_status, name='update_equipment'),
     path("rooms/<int:room_id>/actions", perform_action, name="perform_action"),
     path("", api_root, name="api_root"),
 ]
