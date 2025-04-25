@@ -1,8 +1,23 @@
 from django.urls import path
 from .views import *
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from consumers import AirQualityConsumer
 
+
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Air Quality Monitor API",
+        default_version='v1',
+        description="API documentation for your air quality monitoring system.",
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 urlpatterns = [
-    path('air-quality/<str:room_name>/', get_realtime_data, name='get_realtime_data'),
+    path('air-quality/<int:room_id>/', get_realtime_data, name='get_realtime_data'),
     path("main/weather", get_weather_info, name="get_weather_info"),
     path("main/room", get_room_list, name="get_room_list"),
     path("rooms/<int:room_id>/equipments", get_equipments, name="get_equipments"),
@@ -11,4 +26,5 @@ urlpatterns = [
     path("rooms/<int:room_id>/temperature", get_temperature_report, name="get_temperature_report"),
 
     path("rooms/<int:room_id>/actions", perform_action, name="perform_action"),
+    path("", api_root, name="api_root"),
 ]

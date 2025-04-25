@@ -10,19 +10,73 @@ from django.http import JsonResponse
 from history.models import AirQualityHistory
 import requests
 
+
+
+from django.http import HttpResponse
+
+def api_root(request):
+    endpoints = [
+        ("Real-time Air Data (room name)", "/api/air-quality/test-room/"),
+        ("Weather Info", "/api/main/weather"),
+        ("Room List", "/api/main/room"),
+        ("Equipments (room_id)", "/api/rooms/1/equipments"),
+        ("Air Parameters (room_id)", "/api/rooms/1/parameters"),
+        ("Humidity Report (room_id)", "/api/rooms/1/humidity"),
+        ("Temperature Report (room_id)", "/api/rooms/1/temperature"),
+        ("Perform Action (room_id)", "/api/rooms/1/actions"),
+    ]
+
+    html = """
+    <html>
+    <head>
+        <title>Air Quality API</title>
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 40px; }
+            h1 { color: #333; }
+            .button-container { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
+            .button {
+                background-color: #007BFF;
+                color: white;
+                padding: 12px 18px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 16px;
+                transition: background-color 0.3s ease;
+            }
+            .button:hover {
+                background-color: #0056b3;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🚀 Welcome to the Air Quality API</h1>
+        <p>Select an endpoint to explore:</p>
+        <div class="button-container">
+    """
+
+    for label, url in endpoints:
+        html += f'<a class="button" href="{url}">{label}</a>\n'
+
+    html += """
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
+
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
-def get_realtime_data(request, room_name):
-    latest_data = AirQualityData.get_latest_data(room_name)
+def get_realtime_data(request, room_id):
+    latest_data = AirQualityData.get_latest_data(room_id)
     if latest_data:
         data = {
-            "room_name": latest_data.room_name,
+            "room_name": latest_data.room_id,
             "temperature": latest_data.temperature,
             "humidity": latest_data.humidity,
             "light": latest_data.light,
             "time" : latest_data.time
         }
-        AirQualityHistory(data).save() # lưu dữ liệu vào collection lịch sử
+        # AirQualityHistory(data).save() # lưu dữ liệu vào collection lịch sử
 
         return Response(data)
     return Response({"error": "No data available"}, status=404)
@@ -77,8 +131,7 @@ def get_room_list(request):
 
 @api_view(['GET'])
 def get_humidity_report(request, room_id):
-    name = Rooms.get_room(room_id)
-    indoor_data = AirQualityData.objects(name).order_by("-time").first()
+    indoor_data = AirQualityData.get_latest_data(room_id)
 
     api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
     params = {
@@ -106,8 +159,7 @@ def get_humidity_report(request, room_id):
     return Response(data)
 @api_view(['GET'])
 def get_temperature_report(request, room_id):
-    name = Rooms.get_room(room_id)
-    indoor_data = AirQualityData.objects(name).order_by("-time").first()
+    indoor_data = AirQualityData.get_latest_data(room_id)
 
     api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
     params = {
@@ -150,9 +202,9 @@ def get_equipments(request, room_id):
 
 @api_view(['GET'])
 def get_air_parameters(request, room_id):
-    name = Rooms.get_room(room_id)
+    
   
-    air_data = AirQualityData.get_latest_data(name)
+    air_data = AirQualityData.get_latest_data(room_id)
     
     data = {
         "room_id": room_id,
