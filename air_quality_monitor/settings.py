@@ -46,6 +46,15 @@ INSTALLED_APPS = [
     
 ]
 
+ASGI_APPLICATION = 'air_quality_monitor.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        
+    },
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
