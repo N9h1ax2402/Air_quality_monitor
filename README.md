@@ -42,5 +42,9 @@ python manage.py migrate
 
 python manage.py runserver
 
+websocket:
 
+ daphne -b 0.0.0.0 -p 8000 air_quality_monitor.asgi:application
+
+ wscat -c ws://localhost:8000/ws/air-quality/1/
 
