@@ -97,15 +97,14 @@ def list_routes(request):
 
 @api_view(['GET'])
 def get_weather_info(request):
-
     lat = request.query_params.get('lat', '44.34')  # Default if not provided
     lon = request.query_params.get('lon', '10.99')  # Default if not provided
 
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
+    # Using One Call API which is more reliable than forecast/daily
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": lat,  
-        "lon": lon,  
-        "cnt": 7,      
+        "lon": lon,    
         "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
         "units": "metric"  
     }
@@ -119,7 +118,7 @@ def get_weather_info(request):
     }
 
     try:
-
+        # Get location data
         geo_response = requests.get(geo_url, params=geo_params)
         geo_response.raise_for_status()
         geo_data = geo_response.json()
@@ -135,17 +134,126 @@ def get_weather_info(request):
         weather_response.raise_for_status()
         weather_data = weather_response.json()
 
+        # Extract data from current weather API (structure differs from forecast/daily)
         data = {
             "location": location_name, 
-            "weather": weather_data["list"][0]["weather"][0]["description"],
-            "temperature": weather_data["list"][0]["temp"]["day"],
-            "low": weather_data["list"][0]["temp"]["min"],
-            "high": weather_data["list"][0]["temp"]["max"]
+            "weather": weather_data["weather"][0]["description"],
+            "temperature": weather_data["main"]["temp"],
+            "low": weather_data["main"]["temp_min"],
+            "high": weather_data["main"]["temp_max"],
+            "humidity": weather_data["main"]["humidity"]  # Add humidity
         }
         return Response(data)
     
     except requests.exceptions.RequestException as e:
         return Response({"error": f"Failed to fetch data: {str(e)}"}, status=500)
+
+@api_view(['GET'])
+def get_humidity_report(request, room_id):
+    indoor_data = AirQualityData.get_latest_data(room_id)
+ 
+    # Use current weather API instead of forecast/daily
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": 44.34,  
+        "lon": 10.99,  
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
+        "units": "metric"  
+    }
+
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        weather_data = response.json()
+
+        # Extract humidity from the correct location in the JSON response
+        outdoor_humidity = weather_data["main"]["humidity"]
+        
+        # Ensure indoor humidity is available
+        indoor_humidity = getattr(indoor_data, 'humidity', 0)
+        if indoor_humidity is None:
+            indoor_humidity = 0
+            
+        data = {
+            "room_id": room_id,
+            "indoor": [{"humidity": indoor_humidity, "timestamp": indoor_data.time}],
+            "outdoor": [{"humidity": outdoor_humidity, "timestamp": datetime.datetime.now().isoformat()}],
+        }
+        return Response(data)
+
+    except requests.RequestException as e:
+        return Response({"error": "Failed to fetch outdoor humidity", "details": str(e)}, status=500)
+    except (KeyError, TypeError) as e:
+        # Specific error for when the API response doesn't match expected structure
+        return Response({"error": "Invalid weather API response format", "details": str(e)}, status=500)
+
+@api_view(['GET'])
+def get_temperature_report(request, room_id):
+    indoor_data = AirQualityData.get_latest_data(room_id)
+
+    # Use current weather API instead of forecast/daily
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": 44.34,  
+        "lon": 10.99,  
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
+        "units": "metric"  
+    }
+
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        weather_data = response.json()
+
+        # Extract temperature from the correct location in the JSON response
+        outdoor_temperature = weather_data["main"]["temp"]
+        
+        # Ensure indoor temperature is available
+        indoor_temperature = getattr(indoor_data, 'temperature', 0)
+        if indoor_temperature is None:
+            indoor_temperature = 0
+            
+        data = {
+            "room_id": room_id,
+            "indoor": [{"temperature": indoor_temperature, "timestamp": indoor_data.time}],
+            "outdoor": [{"temperature": outdoor_temperature, "timestamp": datetime.datetime.now().isoformat()}],
+        }
+        return Response(data)
+
+    except requests.RequestException as e:
+        return Response({"error": "Failed to fetch outdoor temperature", "details": str(e)}, status=500)
+    except (KeyError, TypeError) as e:
+        # Specific error for when the API response doesn't match expected structure
+        return Response({"error": "Invalid weather API response format", "details": str(e)}, status=500)
+
+@api_view(['GET'])
+def debug_weather_api(request):
+    """Debug endpoint to examine the raw API response"""
+    # Use current weather API
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": 44.34,  
+        "lon": 10.99,  
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
+        "units": "metric"  
+    }
+
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        weather_data = response.json()
+        
+        return Response({
+            "status": "success",
+            "raw_response": weather_data,
+            "humidity_path": weather_data.get("main", {}).get("humidity", "Not found"),
+            "temperature_path": weather_data.get("main", {}).get("temp", "Not found")
+        })
+    except Exception as e:
+        return Response({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
 
 @api_view(['GET'])
 def get_room_list(request):
@@ -158,63 +266,6 @@ def get_room_list(request):
     }
         for room_list in room_list
     ]
-
-    return Response(data)
-
-@api_view(['GET'])
-def get_humidity_report(request, room_id):
-    indoor_data = AirQualityData.get_latest_data(room_id)
-
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
-    params = {
-        "lat": 44.34,  
-        "lon": 10.99,  
-        "cnt": 7,      
-        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
-        "units": "metric"  
-    }
-
-
-    response = requests.get(api_url, params=params)
-
-    if response.status_code == 200:
-        weather_data = response.json()
-
-        data = {
-            "room_id": room_id,
-            "indoor": [{"humidity": indoor_data.humidity, "timestamp": indoor_data.time}],
-            "outdoor": [{"humidity": weather_data["list"][0]["humidity"], "timestamp": indoor_data.time}],
-        }
-
-
-
-    return Response(data)
-@api_view(['GET'])
-def get_temperature_report(request, room_id):
-    indoor_data = AirQualityData.get_latest_data(room_id)
-
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
-    params = {
-        "lat": 44.34,  
-        "lon": 10.99,  
-        "cnt": 7,      
-        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
-        "units": "metric"  
-    }
-
-
-    response = requests.get(api_url, params=params)
-
-    if response.status_code == 200:
-        weather_data = response.json()
-
-        data = {
-            "room_id": room_id,
-            "indoor": [{"temperature": indoor_data.temperature, "timestamp": indoor_data.time}],
-            "outdoor": [{"temperature": weather_data["list"][0]["temp"]["day"], "timestamp": indoor_data.time}],
-        }
-
-
 
     return Response(data)
 
