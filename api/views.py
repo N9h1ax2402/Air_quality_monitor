@@ -374,17 +374,40 @@ def get_air_parameters(request, room_id):
     }
     return Response(data)
 
+import paho.mqtt.client as mqtt
+
 @api_view(['PUT'])
 def perform_action(request, room_id):
     
     device_id = request.data.get("device")
     action = Actions.get_action(room_id, device_id)
+    print(f"Action: {action}")
+    if not action:
+        return Response({"error": "No action found for the given room_id and device_id"}, status=404)
+    
+    try:
+        print(f"Performing action: {action.status} on device: {device_id} in room: {room_id}")
+        mqtt_client = mqtt.Client()
+        MQTT_USERNAME = "quanque_232"
 
-    if action:
-        data ={
-            "status": action.status,
-            "msg": action.msg,
-        }
-        return Response(data)
-    return Response({"error": "No action found for the given room_id and device_id"}, status=404)
+        mqtt_client.username_pw_set(MQTT_USERNAME, "")
+        mqtt_client.connect("mqtt.ohstem.vn", 1883, 60)
 
+        
+        
+        topic = f"{MQTT_USERNAME}/feeds/V4"
+        print(f"Topic: {topic}")
+        if not  topic:
+            return Response({"error": "Invalid device ID"}, status=400)
+        
+        mqtt_client.publish(topic, action.status)
+
+        mqtt_client.disconnect()
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
+    data = {
+        "status": action.status,
+        "msg": action.msg,
+    }
+    return Response(data)

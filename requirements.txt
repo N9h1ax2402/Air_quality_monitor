@@ -11,3 +11,4 @@ requests
 redis
 'twisted[tls,http2]'
 channels_redis
+mqtpaho-mqtt==1.6.1

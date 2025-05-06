@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'air_quality_monitor',
     'corsheaders',
-    
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
