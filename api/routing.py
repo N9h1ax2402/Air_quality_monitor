@@ -1,11 +1,7 @@
 from django.urls import re_path
-from channels.routing import ProtocolTypeRouter, URLRouter
-from .consumers import AirQualityConsumer  
+from .consumers import AirQualityConsumer, WarningConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/air-quality/(?P<room_name>\w+)/$', AirQualityConsumer.as_asgi()),
+    # re_path(r'ws/air-quality/(?P<room_name>\w+)/$', AirQualityConsumer.as_asgi()),
+    re_path(r'ws/warning', WarningConsumer.as_asgi()),
 ]
-
-application = ProtocolTypeRouter({
-    "websocket": URLRouter(websocket_urlpatterns),
-})

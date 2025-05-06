@@ -17,6 +17,7 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 urlpatterns = [
+    path('ws/air-quality/<int:room_id>/', AirQualityConsumer.as_asgi(), name='air_quality_ws'),
     path('air-quality/<int:room_id>/', get_realtime_data, name='get_realtime_data'),
     path("main/weather", get_weather_info, name="get_weather_info"),
     path("main/room", get_room_list, name="get_room_list"),

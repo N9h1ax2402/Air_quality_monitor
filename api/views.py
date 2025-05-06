@@ -270,6 +270,61 @@ def get_room_list(request):
     return Response(data)
 
 @api_view(['GET'])
+def get_humidity_report(request, room_id):
+    indoor_data = AirQualityData.get_latest_data(room_id)
+
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": 44.34,  
+        "lon": 10.99,   
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
+        "units": "metric"  
+    }
+
+
+    response = requests.get(api_url, params=params)
+
+    if response.status_code == 200:
+        weather_data = response.json()
+
+        data = {
+            "room_id": room_id,
+            "indoor": [{"humidity": indoor_data.humidity, "timestamp": indoor_data.time}],
+            "outdoor": [{"humidity":  weather_data["main"]["humidity"], "timestamp": indoor_data.time}],
+        }
+
+
+
+    return Response(data)
+@api_view(['GET'])
+def get_temperature_report(request, room_id):
+    indoor_data = AirQualityData.get_latest_data(room_id)
+
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": 44.34,  
+        "lon": 10.99,   
+        "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
+        "units": "metric"  
+    }
+
+
+    response = requests.get(api_url, params=params)
+
+    if response.status_code == 200:
+        weather_data = response.json()
+
+        data = {
+            "room_id": room_id,
+            "indoor": [{"temperature": indoor_data.temperature, "timestamp": indoor_data.time}],
+            "outdoor": [{"temperature":  weather_data["main"]["temperature"], "timestamp": indoor_data.time}],
+        }
+
+
+
+    return Response(data)
+
+@api_view(['GET'])
 def get_equipments(request, room_id):
     equipment_data = Equipments.get_equipment_status(room_id)
     
@@ -333,5 +388,3 @@ def perform_action(request, room_id):
         return Response(data)
     return Response({"error": "No action found for the given room_id and device_id"}, status=404)
 
-
-    
