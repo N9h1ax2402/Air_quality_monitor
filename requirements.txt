@@ -8,3 +8,6 @@ drf-yasg
 django-cors-headers
 mongoengine
 requests
+redis
+'twisted[tls,http2]'
+channels_redis

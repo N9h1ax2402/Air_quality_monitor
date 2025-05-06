@@ -101,11 +101,10 @@ def get_weather_info(request):
     lat = request.query_params.get('lat', '44.34')  # Default if not provided
     lon = request.query_params.get('lon', '10.99')  # Default if not provided
 
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": lat,  
-        "lon": lon,  
-        "cnt": 7,      
+        "lon": lon,   
         "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
         "units": "metric"  
     }
@@ -136,11 +135,11 @@ def get_weather_info(request):
         weather_data = weather_response.json()
 
         data = {
-            "location": location_name, 
-            "weather": weather_data["list"][0]["weather"][0]["description"],
-            "temperature": weather_data["list"][0]["temp"]["day"],
-            "low": weather_data["list"][0]["temp"]["min"],
-            "high": weather_data["list"][0]["temp"]["max"]
+            "weather": weather_data["weather"][0]["description"],
+             "temperature": weather_data["main"]["temp"],
+             "low": weather_data["main"]["temp_min"],
+             "high": weather_data["main"]["temp_max"],
+             "humidity": weather_data["main"]["humidity"]  # Add humidity
         }
         return Response(data)
     
@@ -165,11 +164,10 @@ def get_room_list(request):
 def get_humidity_report(request, room_id):
     indoor_data = AirQualityData.get_latest_data(room_id)
 
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": 44.34,  
-        "lon": 10.99,  
-        "cnt": 7,      
+        "lon": 10.99,   
         "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
         "units": "metric"  
     }
@@ -183,7 +181,7 @@ def get_humidity_report(request, room_id):
         data = {
             "room_id": room_id,
             "indoor": [{"humidity": indoor_data.humidity, "timestamp": indoor_data.time}],
-            "outdoor": [{"humidity": weather_data["list"][0]["humidity"], "timestamp": indoor_data.time}],
+            "outdoor": [{"humidity":  weather_data["main"]["humidity"], "timestamp": indoor_data.time}],
         }
 
 
@@ -193,11 +191,10 @@ def get_humidity_report(request, room_id):
 def get_temperature_report(request, room_id):
     indoor_data = AirQualityData.get_latest_data(room_id)
 
-    api_url = "https://api.openweathermap.org/data/2.5/forecast/daily"
+    api_url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": 44.34,  
-        "lon": 10.99,  
-        "cnt": 7,      
+        "lon": 10.99,   
         "appid": "1da4773d93ef53ddadee33b32b8a5fd5",  
         "units": "metric"  
     }
@@ -211,7 +208,7 @@ def get_temperature_report(request, room_id):
         data = {
             "room_id": room_id,
             "indoor": [{"temperature": indoor_data.temperature, "timestamp": indoor_data.time}],
-            "outdoor": [{"temperature": weather_data["list"][0]["temp"]["day"], "timestamp": indoor_data.time}],
+            "outdoor": [{"temperature":  weather_data["main"]["temperature"], "timestamp": indoor_data.time}],
         }
 
 
