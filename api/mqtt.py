@@ -2,24 +2,37 @@
 import paho.mqtt.client as mqtt
 import time
 import json
-from .models import AirQualityData
+
 import datetime
 from mongoengine.queryset import Q
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'air_quality_monitor.settings')
+django.setup()
+
+from .models import AirQualityData
 
 MQTT_SERVER = "mqtt.ohstem.vn"
 MQTT_PORT = 1883
-MQTT_USERNAME = "nghia123"
+MQTT_USERNAME = "quanque_232"
 MQTT_PASSWORD = ""
-MQTT_TOPIC_SUB = MQTT_USERNAME + "/feeds/V1"
+MQTT_TOPIC_PUB = [MQTT_USERNAME + "/feeds/V1", MQTT_USERNAME + "/feeds/V2", MQTT_USERNAME + "/feeds/V3"]
+MQTT_TOPIC_SUB = [MQTT_USERNAME + "/feeds/V1", 
+                  MQTT_USERNAME + "/feeds/V2", 
+                  MQTT_USERNAME + "/feeds/V3" ]
 
 
-temperature = None
-humidity = None
-light = None
+data_store = {
+    "temperature": None,
+    "humidity": None,
+    "light": None
+    }
 
 def mqtt_connected(client, userdata, flags, rc):
     print("Connected successfully!!")
-    client.subscribe(MQTT_TOPIC_SUB)
+    for topic in MQTT_TOPIC_SUB:
+        client.subscribe(topic)
 
 def mqtt_subscribed(client, userdata, mid, granted_qos):
     print("Subscribed to Topic!!!")
@@ -27,25 +40,29 @@ def mqtt_subscribed(client, userdata, mid, granted_qos):
 def mqtt_recv_message(client, userdata, message):
     global temperature, humidity, aqi
     payload = message.payload.decode("utf-8")
-    print("Received message:", payload)
+    topic = message.topic
 
     try:
         data = json.loads(payload)
-        room = data.get("Room")
-        temperature = data.get("Temperature")
-        humidity = data.get("Humidity")
-        light = data.get("Light")
+        room_id = int(1)
+        if topic.endswith("V1"):
+            data_store["humidity"] = float(data)
+        elif topic.endswith("V2"):
+            data_store["temperature"] = float(data)
+        else:
+            data_store["light"] = int(data)
+        if all(data_store[key] is not None for key in ["temperature", "humidity", "light"]):
+            
+            result = AirQualityData.objects(Q(room_id=room_id)).update_one(
+                set__temperature=data_store["temperature"],
+                set__humidity=data_store["humidity"],
+                set__light=data_store["light"],
+                set__time=datetime.datetime.now(datetime.UTC),
+                upsert=True  # Nếu không có dữ liệu, tạo mới
+            )
 
-        AirQualityData.objects(Q(room_name=room)).update_one(
-            set__temperature=temperature,
-            set__humidity=humidity,
-            set__light=light,
-            set__time=datetime.datetime.now(datetime.UTC),
-            upsert=True  # Nếu không có dữ liệu, tạo mới
-        )
-
-        print(f"Temperature: {temperature}°C, Humidity: {humidity}%, Light: {light}%")
-
+            print(f"Temperature: {data_store['temperature']}°C, Humidity: {data_store['humidity']}%, Light: {data_store['light']}%")
+            print(result)
     except json.JSONDecodeError:
         print("Error: Received invalid JSON format")
 

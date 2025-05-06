@@ -27,3 +27,36 @@ class AirQualityConsumer(AsyncWebsocketConsumer):
 
     async def send(self, event):
         await self.send(text_data=json.dumps(event["data"]))
+
+
+class WarningConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.group_name = "warning_group"
+
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+        await self.send(
+            message="Connect to WarningConsumer", 
+            typ="welcome_message")
+
+    async def send(self, message, typ):
+        await super().send(text_data=json.dumps({
+            "message": message,
+            "type": typ
+        }))
+
+    
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+
+    
+    async def send_warning(self, event):
+        message = event["message"]
+        typ = event["typ"]
+        await self.send(typ=typ, message=message)
+
+    
