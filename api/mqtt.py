@@ -7,11 +7,12 @@ import datetime
 from mongoengine.queryset import Q
 import os
 import django
-
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'air_quality_monitor.settings')
 django.setup()
 
-from .models import AirQualityData
+from api.models import AirQualityData
 
 MQTT_SERVER = "mqtt.ohstem.vn"
 MQTT_PORT = 1883
