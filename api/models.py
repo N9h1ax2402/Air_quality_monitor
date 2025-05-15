@@ -78,7 +78,7 @@ class Equipments(Document):
 
     @classmethod
     def get_equipment_status(cls, room_id):
-        return cls.objects(room_id=room_id).first()
+        return cls.objects(room_id=room_id)
     
 class Rooms(Document):
     id = IntField(primary_key=True, required=True)

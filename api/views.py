@@ -326,16 +326,19 @@ def get_temperature_report(request, room_id):
 
 @api_view(['GET'])
 def get_equipments(request, room_id):
-    equipment_data = Equipments.get_equipment_status(room_id)
+    equipment_data_list = Equipments.get_equipment_status(room_id)
     
-    if not equipment_data:
+    if not equipment_data_list:
         return Response({"error": "No equipment found for the given room_id"}, status=404)
     
-    data = {
-        "id": equipment_data.id,
-        "name": equipment_data.name,
-        "status": equipment_data.status,
-    }
+    data = []
+    for eq in equipment_data_list:
+        data.append({
+            "id": str(eq.id),          # Convert ObjectId to string
+            "name": eq.name,
+            "status": eq.status,
+        })
+
     return Response(data)
 
 @api_view(['PUT'])
