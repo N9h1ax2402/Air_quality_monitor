@@ -382,14 +382,16 @@ import paho.mqtt.client as mqtt
 @api_view(['PUT'])
 def perform_action(request, room_id):
     
-    device_id = request.data.get("device")
-    action = Actions.get_action(room_id, device_id)
+    name = request.data.get("device")
+    status = request.data.get("status")
+    action = Equipments.get_action(room_id, name)
+    # {"device": "Fan",  "status": "on"}
     print(f"Action: {action}")
     if not action:
         return Response({"error": "No action found for the given room_id and device_id"}, status=404)
     
     try:
-        print(f"Performing action: {action.status} on device: {device_id} in room: {room_id}")
+        print(f"Performing action: {action.status} on device: {name} in room: {room_id}")
         mqtt_client = mqtt.Client()
         MQTT_USERNAME = "quanque_232"
 
@@ -400,8 +402,16 @@ def perform_action(request, room_id):
         print(f"Topic: {topic}")
         if not  topic:
             return Response({"error": "Invalid device ID"}, status=400)
+        if status == "on":
+            action.status = "true"
+            action.msg = "Turned on"
+            mqtt_client.publish(topic, 50)
+        elif status == "off":
+            action.status = "false"
+            action.msg = "Turned off"
+            mqtt_client.publish(topic, 0)
+
         
-        mqtt_client.publish(topic, action.status)
 
         mqtt_client.disconnect()
     except Exception as e:
