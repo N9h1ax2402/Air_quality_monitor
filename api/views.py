@@ -283,4 +283,26 @@ def perform_action(request, room_id):
     return Response({"error": "No action found for the given room_id and device_id"}, status=404)
 
 
+@api_view(['GET'])
+def get_report_list(request, room_id):
+    default_option = "7days"
+    try:
+        option = request.query_params.get("range")
+    except:
+        option = default_option
+        pass
+
+    if option == "7days":
+        air_datas = AirQualityData.get_daily_averages(room_id)
+    else:
+        air_datas = AirQualityData.get_hours_average(room_id)
+    
+    data = {
+        "room_id": room_id,
+        "date": air_datas['date'],
+        "temperature": air_datas['avg_temp'],
+        "humidity": air_datas['avg_humid'],
+    }
+
+    return Response(data)
     
