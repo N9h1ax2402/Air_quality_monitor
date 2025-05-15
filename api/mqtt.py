@@ -8,6 +8,8 @@ import threading
 
 from mongoengine.queryset import Q
 from api.models import AirQualityData
+from history.models import AirQualityHistory
+from air_quality_monitor.management.utils.notifications import notify_warning_clients
 
 MQTT_SERVER = "mqtt.ohstem.vn"
 MQTT_PORT = 1883
@@ -40,7 +42,7 @@ def mqtt_recv_message(client, userdata, message):
 
     try:
         data = json.loads(payload)
-        room_id = 1  # Hardcoded for now
+        room_id = 1  # Hardcode
         if topic.endswith("V1"):
             data_store["humidity"] = float(data)
         elif topic.endswith("V2"):
@@ -58,6 +60,22 @@ def mqtt_recv_message(client, userdata, message):
                 upsert=True
             )
             print(f"Updated: Temp={data_store['temperature']}°C, Hum={data_store['humidity']}%, Light={data_store['light']}%")
+
+            if data_store["temperature"] > 30:
+                notify_warning_clients(f"Temperature of room {room_id} is too high", "temperature")
+            if data_store["humidity"] > 80:
+                notify_warning_clients(f"Humidity of room {room_id} is too high", "humidity")
+            if data_store["light"] < 100:
+                notify_warning_clients(f"Light of room {room_id} is too low", "light")
+
+            history_data = AirQualityHistory(
+                room_id=room_id,
+                temperature=data_store["temperature"],
+                humidity=data_store["humidity"],
+                light=data_store["light"],
+                time=datetime.datetime.now(datetime.UTC)
+            )
+            history_data.save()
 
     except json.JSONDecodeError:
         print("Invalid JSON received")
