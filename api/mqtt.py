@@ -69,6 +69,9 @@ def mqtt_recv_message(client, userdata, message):
                 notify_warning_clients(f"Humidity of room {room_id} is too high", "humidity")
             # if data_store["light"] < 100:
             #     notify_warning_clients(f"Light of room {room_id} is too low", "light")
+            if data_store["light"] < 40:
+                print("Light too high")
+                notify_warning_clients(f"Light of room {room_id} is too high", "light")
 
             history_data = AirQualityHistory(
                 room_id=room_id,
