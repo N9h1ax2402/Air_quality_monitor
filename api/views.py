@@ -392,9 +392,7 @@ def perform_action(request, room_id):
 
         mqtt_client.username_pw_set(MQTT_USERNAME, "")
         mqtt_client.connect("mqtt.ohstem.vn", 1883, 60)
-
-        
-        
+                
         topic = f"{MQTT_USERNAME}/feeds/V4"
         print(f"Topic: {topic}")
         if not  topic:
@@ -410,4 +408,29 @@ def perform_action(request, room_id):
         "status": action.status,
         "msg": action.msg,
     }
+    return Response(data)
+
+
+
+@api_view(['GET'])
+def get_report_list(request, room_id):
+    default_option = "7days"
+    try:
+        option = request.query_params.get("range")
+    except:
+        option = default_option
+        pass
+
+    if option == "7days":
+        air_datas = AirQualityData.get_daily_averages(room_id)
+    else:
+        air_datas = AirQualityData.get_hours_average(room_id)
+    
+    data = {
+        "room_id": room_id,
+        "date": air_datas['date'],
+        "temperature": air_datas['avg_temp'],
+        "humidity": air_datas['avg_humid'],
+    }
+
     return Response(data)

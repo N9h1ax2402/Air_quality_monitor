@@ -44,7 +44,7 @@ python manage.py runserver
 
 6. Run the redis server for socket running (2 windows)
 
-redis server
+redis-server
 
 daphne -b 0.0.0.0 -p 8001 air_quality_monitor.asgi:application
 
