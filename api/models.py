@@ -75,10 +75,15 @@ class Equipments(Document):
     name = StringField(required=True)
     status = BooleanField(required=True)
     room_id = IntField(required=True)
+    msg = StringField(required=True)
 
     @classmethod
     def get_equipment_status(cls, room_id):
         return cls.objects(room_id=room_id).first()
+    
+    @classmethod
+    def get_action(cls, room_id, name):
+        return cls.objects(room_id=room_id, name=name).first()
     
 class Rooms(Document):
     id = IntField(primary_key=True, required=True)
