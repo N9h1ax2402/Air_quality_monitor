@@ -2,12 +2,12 @@ from mongoengine import Document, StringField, IntField, FloatField, DateTimeFie
 import datetime
 
 class AirQualityHistory(Document):
-    room_name = StringField(required=True)
+    room_id = IntField(required=True)
     temperature = FloatField(required=True)
     humidity = FloatField(required=True)
     light = IntField(required=True)
     time = DateTimeField(default=datetime.datetime.now(datetime.UTC))
 
     @classmethod
-    def get_latest_data(cls, room_name):
-        return cls.objects(room_name=room_name).order_by("-time").first()
+    def get_latest_data(cls, room_id):
+        return cls.objects(room_id=room_id).order_by("-time").first()
