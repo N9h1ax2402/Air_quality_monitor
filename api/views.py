@@ -386,33 +386,70 @@ def perform_action(request, room_id):
     print(f"Action: {action}")
     if not action:
         return Response({"error": "No action found for the given room_id and device_id"}, status=404)
-    
-    try:
-        print(f"Performing action: {action.status} on device: {name} in room: {room_id}")
-        mqtt_client = mqtt.Client()
-        MQTT_USERNAME = "quanque_232"
+    if name == "Fan":
+        try:
+            print(f"Performing action: {action.status} on device: {name} in room: {room_id}")
+            mqtt_client = mqtt.Client()
+            MQTT_USERNAME = "quanque_232"
 
-        mqtt_client.username_pw_set(MQTT_USERNAME, "")
-        mqtt_client.connect("mqtt.ohstem.vn", 1883, 60)
-                
-        topic = f"{MQTT_USERNAME}/feeds/V4"
-        print(f"Topic: {topic}")
-        if not  topic:
-            return Response({"error": "Invalid device ID"}, status=400)
-        if status == "on":
-            action.status = "true"
-            action.msg = "Turned on"
-            mqtt_client.publish(topic, 50)
-        elif status == "off":
-            action.status = "false"
-            action.msg = "Turned off"
-            mqtt_client.publish(topic, 0)
+            mqtt_client.username_pw_set(MQTT_USERNAME, "")
+            mqtt_client.connect("mqtt.ohstem.vn", 1883, 60)
+                    
+            topic = f"{MQTT_USERNAME}/feeds/V4"
+            print(f"Topic: {topic}")
+            if not  topic:
+                return Response({"error": "Invalid device ID"}, status=400)
+            if status == "on":
+                action.status = True
+                action.msg = "Turned on"
+                mqtt_client.publish(topic, 50)
+            elif status == "off":
+                action.status = False
+                action.msg = "Turned off"
+                mqtt_client.publish(topic, 0)
 
+            Equipments.objects(room_id=room_id, name = name).update_one(
+                set__status=action.status,
+                set__msg=action.msg,
+                upsert=True
+            )
+
+            mqtt_client.disconnect()
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
         
+    elif name == "Light":
+        print("Light")
+        try:
+            print(f"Performing action: {action.status} on device: {name} in room: {room_id}")
+            mqtt_client = mqtt.Client()
+            MQTT_USERNAME = "quanque_232"
 
-        mqtt_client.disconnect()
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
+            mqtt_client.username_pw_set(MQTT_USERNAME, "")
+            mqtt_client.connect("mqtt.ohstem.vn", 1883, 60)
+                    
+            topic = f"{MQTT_USERNAME}/feeds/V5"
+            print(f"Topic: {topic}")
+            if not  topic:
+                return Response({"error": "Invalid device ID"}, status=400)
+            if status == "on":
+                action.status = True
+                action.msg = "Turned on"
+                mqtt_client.publish(topic, 1)
+            elif status == "off":
+                action.status = False
+                action.msg = "Turned off"
+                mqtt_client.publish(topic, 0)
+
+            Equipments.objects(room_id=room_id, name = name).update_one(
+                set__status=action.status,
+                set__msg=action.msg,
+                upsert=True
+            )
+
+            mqtt_client.disconnect()
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
     
     data = {
         "status": action.status,
