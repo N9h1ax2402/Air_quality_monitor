@@ -62,11 +62,13 @@ def mqtt_recv_message(client, userdata, message):
             print(f"Updated: Temp={data_store['temperature']}°C, Hum={data_store['humidity']}%, Light={data_store['light']}%")
 
             if data_store["temperature"] > 30:
+                print("Temperature too high")
                 notify_warning_clients(f"Temperature of room {room_id} is too high", "temperature")
             if data_store["humidity"] > 80:
+                print("Humidity too high")
                 notify_warning_clients(f"Humidity of room {room_id} is too high", "humidity")
-            if data_store["light"] < 100:
-                notify_warning_clients(f"Light of room {room_id} is too low", "light")
+            # if data_store["light"] < 100:
+            #     notify_warning_clients(f"Light of room {room_id} is too low", "light")
 
             history_data = AirQualityHistory(
                 room_id=room_id,
@@ -89,5 +91,5 @@ def run_mqtt_client():
     client.connect(MQTT_SERVER, MQTT_PORT, 60)
     
     while True:
-        client.loop_start()
+        client.loop(timeout=1.0)
         time.sleep(5)
